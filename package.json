@@ -11,6 +11,8 @@
   "dependencies": {
     "ejs": "^2.6.1",
     "express": "^4.17.0",
-    "leboncoin-api": "0.0.37"
+    "leboncoin-api": "0.0.37",
+    "mjml": "^4.4.0-beta.1",
+    "node-mailjet": "^3.3.1"
   }
 }
