@@ -1,6 +1,7 @@
 const fs = require('fs')
 const leboncoin = require('leboncoin-api')
 const mjml2html = require('mjml')
+const sgMail = require('@sendgrid/mail')
 
 var config = require('./config.json')
 
@@ -8,6 +9,8 @@ var promises = []
 const lastUpdate = new Date(config.lastUpdate)
 const runDate = new Date()
 var stream_write = fs.createWriteStream(`${config.home}debug.log`, { flags: 'a' })
+
+sgMail.setApiKey(config.sendGridToken)
 
 const printLog = (text, callback = () => {}, now = false) => {
   if (now) {
@@ -17,6 +20,7 @@ const printLog = (text, callback = () => {}, now = false) => {
   }
 }
 
+// Prepare Leboncoin query
 var search = new leboncoin.Search()
   .setPage(1)
   .setLimit(999)
@@ -32,6 +36,7 @@ var search = new leboncoin.Search()
   .addSearchExtra('price', { min: 0, max: 125000 })
   .addSearchExtra('rooms', { min: 4 })
 
+// Execute Leboncoin research
 search.run().then(data => {
   printLog('nb result = ' + data.nbResult)
 
@@ -45,7 +50,7 @@ search.run().then(data => {
 
     // If regex doesn't match and date superior to last update
     if (!desc.match(regex) && date > lastUpdate) {
-      promises.push(sendFakeEmail(el))
+      promises.push(sendEmailSendGrid(el))
 
       renderEmails += emailMjml(el).html
       wantedResults++
@@ -53,6 +58,7 @@ search.run().then(data => {
   })
   printLog('nb real result = ' + wantedResults)
 
+  // Execute all promises
   Promise.all(promises)
     .then(() => {
       printLog(
@@ -104,38 +110,16 @@ const render = renderEmails => {
   app.listen(8080)
 }
 
-////    FUNC SEND EMAIL    ////
-const sendEmail = el => {
-  const mailjet = require('node-mailjet').connect(config.mailjetPublic, config.mailjetPrivate, {
-    url: 'api.mailjet.com', // default is the API url
-    version: 'v3.1', // default is '/v3'
-    perform_api_call: true, // used for tests. default is true
-  })
-
-  return mailjet
-    .post('send', {
-      url: 'api.mailjet.com',
-      version: 'v3.1',
-      perform_api_call: true,
-    })
-    .request({
-      Messages: [
-        {
-          From: {
-            Email: config.emailFrom,
-            Name: 'Search apart',
-          },
-          To: [
-            {
-              Email: config.emailTo,
-              Name: 'Whargal',
-            },
-          ],
-          Subject: el.title,
-          HTMLPart: emailMjml(el).html,
-        },
-      ],
-    })
+////    FUNC SEND EMAIL SENDGRID    ////
+const sendEmailSendGrid = el => {
+  const msg = {
+    to: config.emailTo,
+    from: config.emailFrom,
+    subject: el.title,
+    html: emailMjml(el).html,
+  }
+  return sgMail
+    .send(msg)
     .then(() => {
       printLog('Email sent: ' + el.title)
     })

@@ -1,7 +1,6 @@
 {
   "home": "/home/pi/projects/search-apart/",
-  "mailjetPublic": "",
-  "mailjetPrivate": "",
+  "sendGridToken": "",
   "emailFrom": "",
   "emailTo": "",
   "lastUpdate": "2019-05-27T08:12:31.056Z"

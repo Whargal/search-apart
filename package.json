@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@sendgrid/mail": "^6.4.0",
     "ejs": "^2.6.1",
     "express": "^4.17.0",
     "leboncoin-api": "0.0.37",
